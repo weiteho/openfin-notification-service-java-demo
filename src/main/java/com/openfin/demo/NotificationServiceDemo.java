@@ -10,6 +10,7 @@ import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.Date;
 import java.util.UUID;
 
 import javax.swing.BorderFactory;
@@ -159,6 +160,7 @@ public class NotificationServiceDemo {
 		JTextField tfCategory = new JTextField("Category");
 		JTextField tfIcon = new JTextField("https://openfin.co/favicon-32x32.png");
 		JTextField tfIndicatorText = new JTextField("");
+		JTextField tfExpiresInSecs = new JTextField("5");
 		
 		JComboBox<String> cbSticky = new JComboBox<>();
 		cbSticky.addItem(NotificationOptions.STICKY_STICKY);
@@ -189,6 +191,8 @@ public class NotificationServiceDemo {
 		pnlCenter.add(new JLabel("Indicator"), gbConst);
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel("Indicator Text"), gbConst);
+		gbConst.gridy++;
+		pnlCenter.add(new JLabel("Expires (in seconds)"), gbConst);
 		gbConst.gridx = 1;
 		gbConst.gridy = 0;
 		gbConst.weightx = 0.5;
@@ -207,6 +211,8 @@ public class NotificationServiceDemo {
 		pnlCenter.add(cbIndicator, gbConst);
 		gbConst.gridy++;
 		pnlCenter.add(tfIndicatorText, gbConst);
+		gbConst.gridy++;
+		pnlCenter.add(tfExpiresInSecs, gbConst);
 		gbConst.weighty = 0.5;
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel(), gbConst);
@@ -226,6 +232,11 @@ public class NotificationServiceDemo {
 				indicatorOpts.setText(indicatorText);
 			}
 			opt.setIndicator(indicatorOpts);
+
+			String expires = tfExpiresInSecs.getText().trim();
+			if (!expires.isEmpty()) {
+				opt.setExpires(new Date(System.currentTimeMillis() + (1000 * (Integer.parseInt(expires)))));
+			}
 			
 			ButtonOptions bo1 = new ButtonOptions("Button 1");
 			bo1.setOnClick(new NotificationActionResult(new JSONObject().put("btn", "btn1")));
