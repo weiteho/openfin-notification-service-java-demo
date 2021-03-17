@@ -66,9 +66,10 @@ public class NotificationServiceDemo {
 	
 	private void initOpenFin() {
 		try {
-			this.desktopConnection = new DesktopConnection(UUID.randomUUID().toString());
+			this.desktopConnection = new DesktopConnection("OpenFin Notification Service Demo");
 			RuntimeConfiguration config = new RuntimeConfiguration();
 			config.setRuntimeVersion("stable");
+//			config.addService("notifications", "https://cdn.openfin.co/services/openfin/notifications/app.json");
 			config.addService("notifications", null);
 			this.desktopConnection.connect(config, new DesktopStateListener() {
 
@@ -139,6 +140,8 @@ public class NotificationServiceDemo {
 		JTextField tfTitle = new JTextField("Title");
 		JTextField tfBody = new JTextField("Body");
 		JTextField tfCategory = new JTextField("Category");
+		JTextField tfIcon = new JTextField("https://openfin.co/favicon-32x32.png");
+		JTextField tfIndicatorText = new JTextField("");
 		
 		JComboBox<String> cbSticky = new JComboBox<>();
 		cbSticky.addItem(NotificationOptions.STICKY_STICKY);
@@ -162,9 +165,13 @@ public class NotificationServiceDemo {
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel("Category"), gbConst);
 		gbConst.gridy++;
+		pnlCenter.add(new JLabel("Icon"), gbConst);
+		gbConst.gridy++;
 		pnlCenter.add(new JLabel("Sticky"), gbConst);
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel("Indicator"), gbConst);
+		gbConst.gridy++;
+		pnlCenter.add(new JLabel("Indicator Text"), gbConst);
 		gbConst.gridx = 1;
 		gbConst.gridy = 0;
 		gbConst.weightx = 0.5;
@@ -176,9 +183,13 @@ public class NotificationServiceDemo {
 		gbConst.gridy++;
 		pnlCenter.add(tfCategory, gbConst);
 		gbConst.gridy++;
+		pnlCenter.add(tfIcon, gbConst);
+		gbConst.gridy++;
 		pnlCenter.add(cbSticky, gbConst);
 		gbConst.gridy++;
 		pnlCenter.add(cbIndicator, gbConst);
+		gbConst.gridy++;
+		pnlCenter.add(tfIndicatorText, gbConst);
 		gbConst.weighty = 0.5;
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel(), gbConst);
@@ -187,15 +198,23 @@ public class NotificationServiceDemo {
 		JButton btnCreate = new JButton("Create Notification");
 		btnCreate.addActionListener(e->{
 			NotificationOptions opt = new NotificationOptions(tfTitle.getText(), tfBody.getText(), tfCategory.getText());
+			String icon = tfIcon.getText().trim();
+			if (!icon.isEmpty()) {
+				opt.setIcon(icon);
+			}
 			opt.setSticky((String) cbSticky.getSelectedItem());
+			NotificationIndicator indicatorOpts = new NotificationIndicator((String) cbIndicator.getSelectedItem());
+			String indicatorText = tfIndicatorText.getText().trim();
+			if (!indicatorText.isEmpty()) {
+				indicatorOpts.setText(indicatorText);
+			}
+			opt.setIndicator(indicatorOpts);
 			
 			ButtonOptions bo1 = new ButtonOptions("Button 1");
 			ButtonOptions bo2 = new ButtonOptions("Button 2");
 			bo2.setCta(true);
 			opt.setButtons(bo1, bo2);
-			
-			opt.setIndicator(new NotificationIndicator((String) cbIndicator.getSelectedItem()));
-			
+
 			this.notifications.create(opt);
 		});
 		JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -208,7 +227,7 @@ public class NotificationServiceDemo {
 	private JPanel createContentPanel() {
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		p.setPreferredSize(new Dimension(550, 350));
+		p.setPreferredSize(new Dimension(550, 400));
 		p.add(this.createToggleNotificationCenterPanel(), BorderLayout.NORTH);
 		p.add(this.createCreateNotificationPanel(), BorderLayout.CENTER);
 		return p;
