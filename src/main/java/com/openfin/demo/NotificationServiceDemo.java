@@ -21,15 +21,19 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.json.JSONObject;
+
 import com.openfin.desktop.DesktopConnection;
 import com.openfin.desktop.DesktopException;
 import com.openfin.desktop.DesktopIOException;
 import com.openfin.desktop.DesktopStateListener;
 import com.openfin.desktop.RuntimeConfiguration;
 import com.openfin.desktop.notifications.ButtonOptions;
+import com.openfin.desktop.notifications.NotificationActionResult;
 import com.openfin.desktop.notifications.NotificationIndicator;
 import com.openfin.desktop.notifications.NotificationOptions;
 import com.openfin.desktop.notifications.Notifications;
+import com.openfin.desktop.notifications.events.NotificationActionEvent;
 
 public class NotificationServiceDemo {
 	
@@ -76,6 +80,14 @@ public class NotificationServiceDemo {
 				@Override
 				public void onReady() {
 					notifications = new Notifications(desktopConnection);
+					
+					
+					notifications.addEventListener(Notifications.EVENT_TYPE_ACTION, ne ->{
+						NotificationActionEvent actionEvent = (NotificationActionEvent) ne;
+						NotificationActionResult actionResult = actionEvent.getResult();
+						System.out.println("actionResult: notificationId: " + actionEvent.getNotificationOptions().getId() + ", user clicked on btn: " + actionResult.getString("btn"));
+					});
+
 					SwingUtilities.invokeLater(()->{
 						glassPane.setVisible(false);
 					});
@@ -123,13 +135,18 @@ public class NotificationServiceDemo {
 	
 	
 	private JPanel createToggleNotificationCenterPanel() {
-		JPanel pnl = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		JPanel pnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		pnl.setBorder(BorderFactory.createTitledBorder("Notification Center"));
 		JButton btnToggleNotificationCenter = new JButton("Toggle Notification Center");
 		btnToggleNotificationCenter.addActionListener(e->{
 			this.notifications.toggleNotificationCenter();
 		});
+		JButton btnClearAll = new JButton("Clear All");
+		btnClearAll.addActionListener(e->{
+			this.notifications.clearAll();
+		});
 		pnl.add(btnToggleNotificationCenter);
+		pnl.add(btnClearAll);
 		return pnl;
 	}
 	
@@ -211,10 +228,12 @@ public class NotificationServiceDemo {
 			opt.setIndicator(indicatorOpts);
 			
 			ButtonOptions bo1 = new ButtonOptions("Button 1");
+			bo1.setOnClick(new NotificationActionResult(new JSONObject().put("btn", "btn1")));
 			ButtonOptions bo2 = new ButtonOptions("Button 2");
+			bo2.setOnClick(new NotificationActionResult(new JSONObject().put("btn", "btn2")));
 			bo2.setCta(true);
 			opt.setButtons(bo1, bo2);
-
+			
 			this.notifications.create(opt);
 		});
 		JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
