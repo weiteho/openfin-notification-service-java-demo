@@ -66,7 +66,9 @@ public class NotificationServiceDemo {
 	private void initOpenFin() {
 		RuntimeConfig config = new RuntimeConfig();
 		config.getRuntime().setVersion("19.89.59.10");
-		OfLauncherBuilder.newLauncherBuilder().connectionListener(new OfRuntimeConnectionListener() {
+		OfLauncherBuilder.newLauncherBuilder()
+		.connectionUuid("OpenFin Notification Service Demo")
+		.connectionListener(new OfRuntimeConnectionListener() {
 			@Override
 			public void onOpen(OpenFinRuntime runtime) {
 				openFinRuntime = runtime;
@@ -125,7 +127,7 @@ public class NotificationServiceDemo {
 		JTextField tfCategory = new JTextField("Category");
 		JTextField tfIcon = new JTextField("https://openfin.co/favicon-32x32.png");
 		JTextField tfIndicatorText = new JTextField("");
-		JTextField tfExpiresInSecs = new JTextField("5");
+		JTextField tfExpiresInSecs = new JTextField("10");
 
 		JComboBox<String> cbSticky = new JComboBox<>();
 		cbSticky.addItem(NotificationOptions.STICKY_STICKY);
