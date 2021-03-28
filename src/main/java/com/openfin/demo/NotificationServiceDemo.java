@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.json.Json;
+import javax.json.JsonValue;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -22,27 +24,24 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import org.json.JSONObject;
-
-import com.openfin.desktop.DesktopConnection;
-import com.openfin.desktop.DesktopException;
-import com.openfin.desktop.DesktopIOException;
-import com.openfin.desktop.DesktopStateListener;
-import com.openfin.desktop.RuntimeConfiguration;
+import com.openfin.desktop.OfLauncherBuilder;
+import com.openfin.desktop.OfRuntimeConnectionListener;
+import com.openfin.desktop.OpenFinRuntime;
+import com.openfin.desktop.beans.RuntimeConfig;
 import com.openfin.desktop.notifications.ButtonOptions;
-import com.openfin.desktop.notifications.NotificationActionResult;
+import com.openfin.desktop.notifications.NotificationActionEvent;
+import com.openfin.desktop.notifications.NotificationEvent;
 import com.openfin.desktop.notifications.NotificationIndicator;
 import com.openfin.desktop.notifications.NotificationOptions;
-import com.openfin.desktop.notifications.Notifications;
-import com.openfin.desktop.notifications.events.NotificationActionEvent;
+import com.openfin.desktop.notifications.OfNotifications;
 
 public class NotificationServiceDemo {
-	
+
 	private JFrame demoWindow;
-	private DesktopConnection desktopConnection;
 	private JPanel glassPane;
-	private Notifications notifications;
-	
+	private OpenFinRuntime openFinRuntime;
+	private OfNotifications notifications;
+
 	public NotificationServiceDemo() {
 		this.demoWindow = new JFrame("OpenFin Notification Service Demo");
 		this.demoWindow.setContentPane(this.createContentPanel());
@@ -51,80 +50,47 @@ public class NotificationServiceDemo {
 		this.demoWindow.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (desktopConnection != null) {
-					try {
-						desktopConnection.disconnect();
-					}
-					catch (DesktopException e1) {
-						e1.printStackTrace();
-					}
+				if (openFinRuntime != null) {
+					openFinRuntime.disconnect();
 				}
 			}
 		});
-		
+
 		this.demoWindow.pack();
 		this.demoWindow.setLocationRelativeTo(null);
 		this.demoWindow.setVisible(true);
 		this.glassPane.setVisible(true);
 		this.initOpenFin();
 	}
-	
+
 	private void initOpenFin() {
-		try {
-			this.desktopConnection = new DesktopConnection("OpenFin Notification Service Demo");
-			RuntimeConfiguration config = new RuntimeConfiguration();
-			config.setRuntimeVersion("stable");
-//			config.addService("notifications", "https://cdn.openfin.co/services/openfin/notifications/app.json");
-			config.addService("notifications", null);
-			this.desktopConnection.connect(config, new DesktopStateListener() {
-
-				@Override
-				public void onReady() {
-					notifications = new Notifications(desktopConnection);
-					
-					
-					notifications.addEventListener(Notifications.EVENT_TYPE_ACTION, ne ->{
-						NotificationActionEvent actionEvent = (NotificationActionEvent) ne;
-						NotificationActionResult actionResult = actionEvent.getResult();
-						System.out.println("actionResult: notificationId: " + actionEvent.getNotificationOptions().getId() + ", user clicked on btn: " + actionResult.getString("btn"));
-					});
-
-					SwingUtilities.invokeLater(()->{
-						glassPane.setVisible(false);
-					});
-				}
-
-				@Override
-				public void onClose(String error) {
+		RuntimeConfig config = new RuntimeConfig();
+		config.getRuntime().setVersion("19.89.59.10");
+		OfLauncherBuilder.newLauncherBuilder().connectionListener(new OfRuntimeConnectionListener() {
+			@Override
+			public void onOpen(OpenFinRuntime runtime) {
+				openFinRuntime = runtime;
+				notifications = new OfNotifications(runtime);
+				notifications.addEventListener(NotificationEvent.TYPE_ACTION, ne -> {
+					NotificationActionEvent actionEvent = (NotificationActionEvent) ne;
+					JsonValue actionResult = actionEvent.getResult();
+					System.out.println("actionResult: notificationId: " + actionEvent.getNotification().getId()
+							+ ", user clicked on btn: " + actionResult.asJsonObject().getString("btn"));
+				});
+				SwingUtilities.invokeLater(() -> {
+					glassPane.setVisible(false);
+				});
+			}
+			
+			@Override
+			public void onClose(String reason) {
+				SwingUtilities.invokeLater(() -> {
 					System.exit(0);
-				}
-
-				@Override
-				public void onError(String reason) {
-					
-				}
-
-				@Override
-				public void onMessage(String message) {
-					
-				}
-
-				@Override
-				public void onOutgoingMessage(String message) {
-					
-				}
-				
-			}, 60);
-			
-		}
-		catch (DesktopException | DesktopIOException | IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			
-		}
+				});
+			}
+		}).runtimeConfig(config).build().launch();
 	}
-	
+
 	private JPanel createGlassPane() {
 		this.glassPane = new JPanel(new BorderLayout());
 		JLabel l = new JLabel("Loading, please wait......");
@@ -133,35 +99,34 @@ public class NotificationServiceDemo {
 		this.glassPane.setBackground(Color.LIGHT_GRAY);
 		return this.glassPane;
 	}
-	
-	
+
 	private JPanel createToggleNotificationCenterPanel() {
 		JPanel pnl = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		pnl.setBorder(BorderFactory.createTitledBorder("Notification Center"));
 		JButton btnToggleNotificationCenter = new JButton("Toggle Notification Center");
-		btnToggleNotificationCenter.addActionListener(e->{
+		btnToggleNotificationCenter.addActionListener(e -> {
 			this.notifications.toggleNotificationCenter();
 		});
 		JButton btnClearAll = new JButton("Clear All");
-		btnClearAll.addActionListener(e->{
+		btnClearAll.addActionListener(e -> {
 			this.notifications.clearAll();
 		});
 		pnl.add(btnToggleNotificationCenter);
 		pnl.add(btnClearAll);
 		return pnl;
 	}
-	
+
 	private JPanel createCreateNotificationPanel() {
 		JPanel pnl = new JPanel(new BorderLayout());
 		pnl.setBorder(BorderFactory.createTitledBorder("Notification"));
-		
+
 		JTextField tfTitle = new JTextField("Title");
 		JTextField tfBody = new JTextField("Body");
 		JTextField tfCategory = new JTextField("Category");
 		JTextField tfIcon = new JTextField("https://openfin.co/favicon-32x32.png");
 		JTextField tfIndicatorText = new JTextField("");
 		JTextField tfExpiresInSecs = new JTextField("5");
-		
+
 		JComboBox<String> cbSticky = new JComboBox<>();
 		cbSticky.addItem(NotificationOptions.STICKY_STICKY);
 		cbSticky.addItem(NotificationOptions.STICKY_TRANSIENT);
@@ -170,7 +135,7 @@ public class NotificationServiceDemo {
 		cbIndicator.addItem(NotificationIndicator.TYPE_FAILURE);
 		cbIndicator.addItem(NotificationIndicator.TYPE_WARNING);
 		cbIndicator.addItem(NotificationIndicator.TYPE_SUCCESS);
-		
+
 		JPanel pnlCenter = new JPanel(new GridBagLayout());
 		GridBagConstraints gbConst = new GridBagConstraints();
 		gbConst.gridx = 0;
@@ -216,11 +181,11 @@ public class NotificationServiceDemo {
 		gbConst.weighty = 0.5;
 		gbConst.gridy++;
 		pnlCenter.add(new JLabel(), gbConst);
-		
-		
+
 		JButton btnCreate = new JButton("Create Notification");
-		btnCreate.addActionListener(e->{
-			NotificationOptions opt = new NotificationOptions(tfTitle.getText(), tfBody.getText(), tfCategory.getText());
+		btnCreate.addActionListener(e -> {
+			NotificationOptions opt = new NotificationOptions(tfTitle.getText(), tfBody.getText(),
+					tfCategory.getText());
 			String icon = tfIcon.getText().trim();
 			if (!icon.isEmpty()) {
 				opt.setIcon(icon);
@@ -237,14 +202,14 @@ public class NotificationServiceDemo {
 			if (!expires.isEmpty()) {
 				opt.setExpires(new Date(System.currentTimeMillis() + (1000 * (Integer.parseInt(expires)))));
 			}
-			
+
 			ButtonOptions bo1 = new ButtonOptions("Button 1");
-			bo1.setOnClick(new NotificationActionResult(new JSONObject().put("btn", "btn1")));
+			bo1.setOnClick(Json.createObjectBuilder().add("btn", "btn1").build());
 			ButtonOptions bo2 = new ButtonOptions("Button 2");
-			bo2.setOnClick(new NotificationActionResult(new JSONObject().put("btn", "btn2")));
+			bo2.setOnClick(Json.createObjectBuilder().add("btn", "btn2").build());
 			bo2.setCta(true);
 			opt.setButtons(bo1, bo2);
-			
+
 			this.notifications.create(opt);
 		});
 		JPanel pnlBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -253,7 +218,7 @@ public class NotificationServiceDemo {
 		pnl.add(pnlBottom, BorderLayout.SOUTH);
 		return pnl;
 	}
-	
+
 	private JPanel createContentPanel() {
 		JPanel p = new JPanel(new BorderLayout());
 		p.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -262,7 +227,7 @@ public class NotificationServiceDemo {
 		p.add(this.createCreateNotificationPanel(), BorderLayout.CENTER);
 		return p;
 	}
-	
+
 	public static void main(String[] args) {
 		new NotificationServiceDemo();
 	}
