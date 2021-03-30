@@ -93,9 +93,7 @@ public class NotificationServiceDemo {
 
 					@Override
 					public void onClose(String reason) {
-						SwingUtilities.invokeLater(() -> {
-							System.exit(0);
-						});
+						System.exit(0);
 					}
 				}).runtimeConfig(config).build().launch();
 	}
