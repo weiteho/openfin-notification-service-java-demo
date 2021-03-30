@@ -54,6 +54,9 @@ public class NotificationServiceDemo {
 				if (openFinRuntime != null) {
 					openFinRuntime.disconnect();
 				}
+				else {
+					System.exit(0);
+				}
 			}
 		});
 
@@ -67,35 +70,34 @@ public class NotificationServiceDemo {
 	private void initOpenFin() {
 		RuntimeConfig config = new RuntimeConfig();
 		config.getRuntime().setVersion("19.89.59.10");
-		OfLauncher.newLauncherBuilder()
-		.connectionUuid("OpenFin Notification Service Demo")
-		.connectionListener(new OfRuntimeConnectionListener() {
-			@Override
-			public void onOpen(OpenFinRuntime runtime) {
-				openFinRuntime = runtime;
-				notifications = new OfNotifications(runtime);
-				notifications.addEventListener(NotificationEvent.TYPE_ACTION, ne -> {
-					NotificationActionEvent actionEvent = (NotificationActionEvent) ne;
-					JsonValue actionResult = actionEvent.getResult();
-					System.out.println("actionResult: notificationId: " + actionEvent.getNotification().getId()
-							+ ", user clicked on btn: " + actionResult.asJsonObject().getString("btn"));
-				});
-				
-				notifications.getProviderStatus().thenAccept(status->{
-					//it comes to here only when the notification service is ready.
-					SwingUtilities.invokeLater(() -> {
-						glassPane.setVisible(false);
-					});
-				});
-			}
-			
-			@Override
-			public void onClose(String reason) {
-				SwingUtilities.invokeLater(() -> {
-					System.exit(0);
-				});
-			}
-		}).runtimeConfig(config).build().launch();
+		OfLauncher.newLauncherBuilder().connectionUuid("OpenFin Notification Service Demo")
+				.connectionListener(new OfRuntimeConnectionListener() {
+					@Override
+					public void onOpen(OpenFinRuntime runtime) {
+						openFinRuntime = runtime;
+						notifications = new OfNotifications(runtime);
+						notifications.addEventListener(NotificationEvent.TYPE_ACTION, ne -> {
+							NotificationActionEvent actionEvent = (NotificationActionEvent) ne;
+							JsonValue actionResult = actionEvent.getResult();
+							System.out.println("actionResult: notificationId: " + actionEvent.getNotification().getId()
+									+ ", user clicked on btn: " + actionResult.asJsonObject().getString("btn"));
+						});
+
+						notifications.getProviderStatus().thenAccept(status -> {
+							// it comes to here only when the notification service is ready.
+							SwingUtilities.invokeLater(() -> {
+								glassPane.setVisible(false);
+							});
+						});
+					}
+
+					@Override
+					public void onClose(String reason) {
+						SwingUtilities.invokeLater(() -> {
+							System.exit(0);
+						});
+					}
+				}).runtimeConfig(config).build().launch();
 	}
 
 	private JPanel createGlassPane() {
