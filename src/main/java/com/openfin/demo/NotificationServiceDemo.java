@@ -24,10 +24,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import com.openfin.desktop.OfLauncher;
 import com.openfin.desktop.OfLauncherBuilder;
 import com.openfin.desktop.OfRuntimeConnectionListener;
 import com.openfin.desktop.OpenFinRuntime;
-import com.openfin.desktop.beans.RuntimeConfig;
+import com.openfin.desktop.bean.RuntimeConfig;
 import com.openfin.desktop.notifications.ButtonOptions;
 import com.openfin.desktop.notifications.NotificationActionEvent;
 import com.openfin.desktop.notifications.NotificationEvent;
@@ -66,7 +67,7 @@ public class NotificationServiceDemo {
 	private void initOpenFin() {
 		RuntimeConfig config = new RuntimeConfig();
 		config.getRuntime().setVersion("19.89.59.10");
-		OfLauncherBuilder.newLauncherBuilder()
+		OfLauncher.newLauncherBuilder()
 		.connectionUuid("OpenFin Notification Service Demo")
 		.connectionListener(new OfRuntimeConnectionListener() {
 			@Override
@@ -79,8 +80,12 @@ public class NotificationServiceDemo {
 					System.out.println("actionResult: notificationId: " + actionEvent.getNotification().getId()
 							+ ", user clicked on btn: " + actionResult.asJsonObject().getString("btn"));
 				});
-				SwingUtilities.invokeLater(() -> {
-					glassPane.setVisible(false);
+				
+				notifications.getProviderStatus().thenAccept(status->{
+					//it comes to here only when the notification service is ready.
+					SwingUtilities.invokeLater(() -> {
+						glassPane.setVisible(false);
+					});
 				});
 			}
 			
