@@ -76,7 +76,7 @@ public class NotificationServiceDemo {
 		try {
 			this.desktopConnection = new DesktopConnection("OpenFin Notification Service Demo");
 			RuntimeConfiguration config = new RuntimeConfiguration();
-			config.setRuntimeVersion("19.89.69.1");
+			config.setRuntimeVersion("19.89.60.1");
 //			config.addService("notifications", "https://cdn.openfin.co/services/openfin/notifications/app.json");
 			config.addService("notifications", null);
 			this.desktopConnection.connect(config, new DesktopStateListener() {
