@@ -51,13 +51,16 @@ public class NotificationServiceDemo {
 		this.demoWindow.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				if (desktopConnection != null) {
+				if (desktopConnection != null && desktopConnection.isConnected()) {
 					try {
 						desktopConnection.disconnect();
 					}
 					catch (DesktopException e1) {
 						e1.printStackTrace();
 					}
+				}
+				else {
+					System.exit(0);
 				}
 			}
 		});
@@ -73,7 +76,7 @@ public class NotificationServiceDemo {
 		try {
 			this.desktopConnection = new DesktopConnection("OpenFin Notification Service Demo");
 			RuntimeConfiguration config = new RuntimeConfiguration();
-			config.setRuntimeVersion("stable");
+			config.setRuntimeVersion("19.89.69.1");
 //			config.addService("notifications", "https://cdn.openfin.co/services/openfin/notifications/app.json");
 			config.addService("notifications", null);
 			this.desktopConnection.connect(config, new DesktopStateListener() {
